@@ -1,0 +1,68 @@
+---
+title: "Reproduciblefile"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+## Introduction
+This report's goal is to reproduce the analysis of Experiment 2 in Mehr, Song, and Spelke (2016). The citation for this article is Mehr, S. A., Song. L. A., & Spelke, E. S. (2016).
+```{r cars}
+summary(cars)
+```
+```{r}
+## Reanalysis
+library(data.table)
+all_data <- read.csv("Projectdata/LUL_pss.csv")
+
+library(dplyr)
+experiment_one <- all_data %>% filter(exp2==1)
+
+t.test(experiment_one$pref1, mu=.5)
+##One Sample t-test
+t.test(experiment_one$pref2, mu=.5)
+
+#Paired T-test
+t.test(experiment_one$pref1,experiment_one$pref2, paired=TRUE, var.equal=TRUE)
+
+difference_scores <- experiment_one$pref1-experiment_one$pref2
+length(difference_scores[difference_scores>0])
+
+Phase <- rep(c("Baseline","Test"), each = 32)
+Proportions <- c(experiment_one$pref1,experiment_one$pref2)
+plot_df <- data.frame(Phase,Proportions)
+
+#Reproducing the figure
+library(ggplot2)
+ggplot(plot_df, aes(x=Phase, y=Proportions))+
+  geom_point()
+mean_df <- aggregate(Proportions ~ Phase, plot_df, mean)
+
+ggplot(plot_df, aes(x=Phase, y=Proportions))+ 
+  geom_point()+
+  geom_point(data=mean_df, color="Red", size=2)
+ggplot(plot_df, aes(x=Phase, y=Proportions))+ 
+  geom_point()+
+  geom_bar(data=mean_df, stat="identity",aes(fill=Phase))
+difference_scores <- experiment_one$pref1-experiment_one$pref2 #calculate difference scores
+standard_error <- sd(difference_scores)/sqrt(length(difference_scores)) #calculate SEM
+
+
+ggplot(plot_df, aes(x=Phase, y=Proportions))+ 
+  geom_bar(data=mean_df, stat="identity",aes(fill=Phase))+
+  geom_errorbar(data=mean_df, aes(ymin=Proportions-standard_error, 
+                                  ymax=Proportions+standard_error), width=.1) +
+  geom_point(alpha=.25)
+```
+```
+#Discussion 
+The re-analysis successfully reproduced the analysis reported by Mehr, Song, and Spelke (2016). 
